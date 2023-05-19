@@ -39,9 +39,22 @@ async function run() {
       if(req.query?.email){
           query= {email: req.query.email}
       }
-      const result = await addedToyCollection.find(query).toArray()
+      
+      const result = await addedToyCollection.find(query).sort({price:1}).toArray()
       res.send(result)
   })
+  app.get("/searchToy/:text", async (req, res) => {
+    const text = req.params.text;
+    const result = await addedToyCollection
+      .find({
+        $or: [
+          { toyName: { $regex: text, $options: "i" } },
+          
+        ],
+      })
+      .toArray();
+    res.send(result);
+  });
     app.post('/addToy', async(req,res) =>{
       const addToy = req.body;
 
@@ -49,9 +62,16 @@ async function run() {
       const result = await addedToyCollection.insertOne(addToy)
       res.send(result)
     })
+    app.get('/addToy/:id', async(req, res) =>{
+      const id = req.params.id;
+      // console.log(id);
+      const query = {_id :new ObjectId(id)}
+      const result = await addedToyCollection.findOne(query);
+      res.send(result)
+    })
     app.put('/addToy/:id', async(req, res) =>{
       const id = req.params.id;
-      const filter = {id : new ObjectId(_id)}
+      const filter = {_id : new ObjectId(id)}
       const options = { upsert: true };
       const updatedToy = req.body;
       const updateToy = {
@@ -69,7 +89,7 @@ async function run() {
     })
     app.delete('/addToy/:id', async(req, res) =>{
       const id = req.params.id;
-      console.log(id);
+      // console.log(id);
       const query = { _id : new ObjectId(id)}
       const result= await addedToyCollection.deleteOne(query);
       res.send(result)
